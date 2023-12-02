@@ -1,8 +1,9 @@
 use std::{error::Error, fs};
 
-fn part1(input: &Vec<&str>) -> u32 {
+fn part1(input: &str) -> u32 {
     input
-        .iter()
+        .lines()
+        .filter(|line| !line.is_empty())
         .fold(0, |acc, line| {
             let digits: Vec<u32> = line
                 .chars()
@@ -16,7 +17,7 @@ fn part1(input: &Vec<&str>) -> u32 {
         })
 }
 
-fn part2(input: &Vec<&str>) -> u32 {
+fn part2(input: &str) -> u32 {
     let spelled = [
         "one",
         "two",
@@ -30,7 +31,8 @@ fn part2(input: &Vec<&str>) -> u32 {
     ];
     
     input
-        .iter()
+        .lines()
+        .filter(|line| !line.is_empty())
         .fold(0, |acc, line| {
             let mut digits: Vec<(usize, u32)> = Vec::new();
 
@@ -64,10 +66,7 @@ fn part2(input: &Vec<&str>) -> u32 {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let binding = fs::read_to_string("input.txt")?;
-    let input: Vec<&str> = binding
-        .split("\r\n")
-        .collect();
+    let input = fs::read_to_string("input.txt")?;
     
     dbg!(part1(&input));
     dbg!(part2(&input));
@@ -81,28 +80,22 @@ mod tests {
 
     #[test]
     fn part_1() {
-        let input: Vec<&str> = "
-            1abc2
+        let input = "1abc2
             pqr3stu8vwx
             a1b2c3d4e5f
-            treb7uchet
-        ".split("\n")
-        .collect();
+            treb7uchet";
         assert_eq!(part1(&input), 142);
     }
 
     #[test]
     fn part_2() {
-        let input: Vec<&str> = "
-            two1nine
+        let input = "two1nine
             eightwothree
             abcone2threexyz
             xtwone3four
             4nineeightseven2
             zoneight234
-            7pqrstsixteen
-        ".split("\n")
-        .collect();
+            7pqrstsixteen";
         assert_eq!(part2(&input), 281);
     }
 }
