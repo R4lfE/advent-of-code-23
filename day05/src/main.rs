@@ -89,15 +89,10 @@ impl PartialOrd for Boundary {
             | (Self::RightMap(a), Self::RightMap(b)) => a.partial_cmp(b),
 
             (Self::Seed(a), Self::LeftMap(b, _)) 
-            | (Self::Seed(a), Self::RightMap(b)) => if a == b {
+            | (Self::Seed(a), Self::RightMap(b)) 
+            | (Self::LeftMap(a, _), Self::Seed(b))
+            | (Self::RightMap(a), Self::Seed(b))=> if a == b {
                 Some(std::cmp::Ordering::Less)
-            } else {
-                a.partial_cmp(b)
-            },
-
-            (Self::LeftMap(a, _), Self::Seed(b))
-            | (Self::RightMap(a), Self::Seed(b)) => if a == b {
-                Some(std::cmp::Ordering::Greater)
             } else {
                 a.partial_cmp(b)
             }
@@ -177,40 +172,41 @@ fn part2(input: &str) -> i64 {
         // handle each boundary event
         for boundary in boundaries.iter_mut() {
             match boundary {
+                
                 // found a seed boundary
-                Boundary::Seed(right_seed_boundary) => {
+                Boundary::Seed(seed_boundary) => {
                     // if we found the right boundary of the seed range
                     if seed_open {
 
-                        // if map range is open, include left_seed_boundary event and modify
+                        // if map range is open, include left seed boundary event and modify
                         if map_open {
                             seed_boundaries.push(Boundary::Seed(left_seed_boundary + map_modifier));
-                            seed_boundaries.push(Boundary::Seed(*right_seed_boundary + map_modifier));
+                            seed_boundaries.push(Boundary::Seed(*seed_boundary + map_modifier));
 
                         // if map range is closed, include left_seed_boundary event without modifying
                         } else {
                             seed_boundaries.push(Boundary::Seed(left_seed_boundary));
-                            seed_boundaries.push(Boundary::Seed(*right_seed_boundary));
+                            seed_boundaries.push(Boundary::Seed(*seed_boundary));
                         }
 
                     // if we found the left boundary of the seed range, remember it
                     } else {
-                        left_seed_boundary = *right_seed_boundary;
+                        left_seed_boundary = *seed_boundary;
                     }
 
                     // flip the seed range state
                     seed_open = !seed_open;
                 },
                 // found left boundary of the map range
-                Boundary::LeftMap(right_seed_boundary, mapped_value) => {
+                Boundary::LeftMap(left_map_boundary, mapped_value) => {
 
                     // if seed range is open, we need to split the range excluding current value without modifying
                     if seed_open {
                         seed_boundaries.push(Boundary::Seed(left_seed_boundary));
-                        seed_boundaries.push(Boundary::Seed(*right_seed_boundary - 1));
+                        seed_boundaries.push(Boundary::Seed(*left_map_boundary - 1));
 
                         // remember the cutoff
-                        left_seed_boundary = *right_seed_boundary;
+                        left_seed_boundary = *left_map_boundary;
                     }
 
                     // remember the map modifier

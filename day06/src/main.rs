@@ -48,17 +48,40 @@ fn part2(input: &str) -> u64 {
                 .collect::<Vec<u64>>()
         }).collect();
 
-    let mut win_count = 0;
-    let t = input[0] as f64;
-    let d = input[1] as f64;
-    for j in 0..t as u64 {
-        let j = j as f64;
-        if (t - j) * j > d {
-            win_count += 1;
+    let t = input[0];
+    let d = input[1];
+
+    let mut left = 0;
+    let mut right = t;
+    while left != right {
+        let mid = left + (right - left) / 2;
+        if (t - mid) * mid > d {
+            right = mid;
+        } else {
+            left = mid;
+        }
+        if left == right - 1 {
+            left = right
         }
     }
+    let first = left;
 
-    win_count
+    left = 0;
+    right = t;
+    while left != right {
+        let mid = left + (right - left) / 2;
+        if (t - mid) * mid > d {
+            left = mid;
+        } else {
+            right = mid;
+        }
+        if left == right - 1 {
+            right = left
+        }
+    }
+    let last = left;
+    
+    last - first + 1
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
