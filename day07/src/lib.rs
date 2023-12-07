@@ -1,5 +1,4 @@
-use core::panic;
-use std::{cmp::Ordering, error::Error, fs, time::Instant};
+use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
@@ -105,7 +104,7 @@ impl Ord for Hand {
             for i in 0..self.cards.len() {
                 match self.cards[i].cmp(&other.cards[i]) {
                     Ordering::Equal => (),
-                    ordering => {return ordering;}
+                    ordering => { return ordering; }
                 }
             }
             Ordering::Equal
@@ -123,7 +122,7 @@ impl PartialOrd for Hand {
     }
 }
 
-fn both(input: &str, jokers: u8) -> u32 {
+pub fn both(input: &str, jokers: u8) -> u32 {
     let mut hands: Vec<Hand> = input
         .lines()
         .filter(|line| !line.is_empty())
@@ -136,20 +135,6 @@ fn both(input: &str, jokers: u8) -> u32 {
         .iter()
         .enumerate()
         .fold(0, |acc, (i, hand)| acc + hand.bid * (i as u32 + 1))
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let input = fs::read_to_string("input.txt")?;
-    
-    let mut now = Instant::now();
-    dbg!(both(&input, 0));
-    println!("{}", now.elapsed().as_nanos());
-
-    now = Instant::now();
-    dbg!(both(&input, 1));
-    println!("{}", now.elapsed().as_nanos());
-
-    Ok(())
 }
 
 #[cfg(test)]
