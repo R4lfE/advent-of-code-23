@@ -1,3 +1,4 @@
+use core::panic;
 use std::{cmp::Ordering, error::Error, fs, time::Instant};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -11,7 +12,7 @@ enum HandType {
     High = 0
 }
 
-#[derive(Debug, Eq, Ord)]
+#[derive(Debug, Eq)]
 struct Hand {
     bid: u32,
     cards: [u8; 5],
@@ -40,7 +41,7 @@ impl Hand {
             }
         }
 
-        let mut counter = vec![0; 13];
+        let mut counter = [0; 13];
         for card in cards.iter() {
             counter[*card as usize + jokers as usize - 2] += 1;
         }
@@ -97,23 +98,28 @@ impl PartialEq for Hand {
     }
 }
 
-impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
         // compare cards
         if self.hand_type == other.hand_type {
             for i in 0..self.cards.len() {
-                if self.cards[i] < other.cards[i] {
-                    return Some(Ordering::Less);
-                } else if self.cards[i] > other.cards[i] {
-                    return Some(Ordering::Greater);
+                match self.cards[i].cmp(&other.cards[i]) {
+                    Ordering::Equal => (),
+                    ordering => {return ordering;}
                 }
             }
-            return None;
+            Ordering::Equal
 
         // compare hand types
         } else {
-            return self.hand_type.partial_cmp(&other.hand_type);
+            self.hand_type.cmp(&other.hand_type)
         }
+    }
+}
+
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -166,7 +172,7 @@ mod tests {
         KK677 28
         KTJJT 220
         QQQJA 483";
-        assert_eq!(both(&input, 0), 6440);
+        assert_eq!(both(input, 0), 6440);
     }
 
     #[test]
@@ -176,6 +182,6 @@ mod tests {
         KK677 28
         KTJJT 220
         QQQJA 483";
-        assert_eq!(both(&input, 1), 5905);
+        assert_eq!(both(input, 1), 5905);
     }
 }
