@@ -207,21 +207,21 @@ impl Pipe {
     }
 }
 
-fn sketch_pipes(input: &str) -> Vec<Vec<Pipe>> {
+fn sketch_pipes(input: &str) -> Vec<Vec<(Pipe, bool)>> {
     input
         .lines()
         .filter(|line| !line.is_empty())
         .map(|line| line
             .trim()
             .chars()
-            .map(Pipe::from)
+            .map(|c| (Pipe::from(c), false))
             .collect())
         .collect()
 }
 
-fn set_start(pipes: &mut Vec<Vec<Pipe>>, mut start: (i32, i32)) -> (i32, i32) {
+fn set_start(pipes: &mut Vec<Vec<(Pipe, bool)>>, mut start: (i32, i32)) -> (i32, i32) {
     for (i, pipe_row) in pipes.iter().enumerate() {
-        for (j, p) in pipe_row.iter().enumerate() {
+        for (j, (p, _)) in pipe_row.iter().enumerate() {
             if *p == Pipe::Start {
                 start = (i as i32, j as i32);
                 break;
@@ -230,29 +230,29 @@ fn set_start(pipes: &mut Vec<Vec<Pipe>>, mut start: (i32, i32)) -> (i32, i32) {
     }
 
     if 0 < start.1 
-        && Pipe::Start.possible(&pipes[start.0 as usize][start.1 as usize - 1], (0, -1)) {
+        && Pipe::Start.possible(&pipes[start.0 as usize][start.1 as usize - 1].0, (0, -1)) {
         if 0 < start.0 
-            && Pipe::Start.possible(&pipes[start.0 as usize - 1][start.1 as usize], (-1, 0)) {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::NW;
+            && Pipe::Start.possible(&pipes[start.0 as usize - 1][start.1 as usize].0, (-1, 0)) {
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::NW, false);
         } else if start.0 < (pipes.len() - 1) as i32 
-            && Pipe::Start.possible(&pipes[start.0 as usize + 1][start.1 as usize], (1, 0)) {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::SW;
+            && Pipe::Start.possible(&pipes[start.0 as usize + 1][start.1 as usize].0, (1, 0)) {
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::SW, false);
         } else {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::Horizontal;
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::Horizontal, false);
         }
     } else if start.1 < (pipes[start.0 as usize].len() - 1) as i32 
-        && Pipe::Start.possible(&pipes[start.0 as usize][start.1 as usize + 1], (0, 1)) {
+        && Pipe::Start.possible(&pipes[start.0 as usize][start.1 as usize + 1].0, (0, 1)) {
         if 0 < start.0 
-            && Pipe::Start.possible(&pipes[start.0 as usize - 1][start.1 as usize], (-1, 0)) {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::NE;
+            && Pipe::Start.possible(&pipes[start.0 as usize - 1][start.1 as usize].0, (-1, 0)) {
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::NE, false);
         } else if start.0 < (pipes.len() - 1) as i32 
-            && Pipe::Start.possible(&pipes[start.0 as usize + 1][start.1 as usize], (1, 0)) {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::SE;
+            && Pipe::Start.possible(&pipes[start.0 as usize + 1][start.1 as usize].0, (1, 0)) {
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::SE, false);
         } else {
-            pipes[start.0 as usize][start.1 as usize] = Pipe::Horizontal;
+            pipes[start.0 as usize][start.1 as usize] = (Pipe::Horizontal, false);
         }
     } else {
-        pipes[start.0 as usize][start.1 as usize] = Pipe::Vertical;
+        pipes[start.0 as usize][start.1 as usize] = (Pipe::Vertical, false);
     }
 
     start
@@ -286,13 +286,7 @@ struct PathNode {
     dir: Dir
 }
 
-impl PartialEq for PathNode {
-    fn eq(&self, other: &Self) -> bool {
-        self.i == other.i && self.j == other.j
-    }
-}
-
-fn find_path(pipes: &Vec<Vec<Pipe>>, start: (i32, i32)) -> Vec<PathNode> {
+fn find_path(pipes: &mut Vec<Vec<(Pipe, bool)>>, start: (i32, i32)) -> Vec<PathNode> {
     let mut path = Vec::new();
 
     let mut prev = start;
@@ -301,11 +295,13 @@ fn find_path(pipes: &Vec<Vec<Pipe>>, start: (i32, i32)) -> Vec<PathNode> {
     let mut steps = 0;
     let mut dir = Dir::Up;
     while current != start || steps == 0 {
-        let current_pipe = &pipes[current.0 as usize][current.1 as usize];
+        pipes[current.0 as usize][current.1 as usize].1 = true;
+
+        let current_pipe = &pipes[current.0 as usize][current.1 as usize].0;
         let mut found = current;
 
         for neighbor in current_pipe.get_neighbors() {
-            let other_pipe = &pipes[(current.0 + neighbor.0) as usize][(current.1 + neighbor.1) as usize];
+            let other_pipe = &pipes[(current.0 + neighbor.0) as usize][(current.1 + neighbor.1) as usize].0;
 
             if (prev.0 != current.0 + neighbor.0
                 || prev.1 != current.1 + neighbor.1)
@@ -332,7 +328,7 @@ pub fn part1(input: &str) -> i32 {
     let mut start = (pipes.len() as i32, pipes[0].len() as i32);
 
     start = set_start(&mut pipes, start);
-    let path = find_path(&pipes, start);
+    let path = find_path(&mut pipes, start);
 
     path.len() as i32 / 2
 }
@@ -342,7 +338,7 @@ pub fn part2(input: &str) -> i32 {
     let mut start = (pipes.len() as i32, pipes[0].len() as i32);
 
     start = set_start(&mut pipes, start);
-    let path = find_path(&pipes, start);
+    let path = find_path(&mut pipes, start);
 
     let mut turn_counter: i32 = 0;
     let mut dir = path[0].dir.clone();
@@ -374,8 +370,8 @@ pub fn part2(input: &str) -> i32 {
 
     for i in 0..pipes.len() {
         for j in 0..pipes[i].len() {
-            if !path.iter().any(|path_node| i == path_node.i as usize && j == path_node.j as usize) {
-                pipes[i][j] = Pipe::Ground;
+            if !pipes[i][j].1 {
+                pipes[i][j].0 = Pipe::Ground;
             }
         }
     }
@@ -388,21 +384,21 @@ pub fn part2(input: &str) -> i32 {
                 let mut j = path_node.j + sign;
                 while 0 <= j
                     && j < pipes[path_node.i as usize].len() as i32
-                    && !path.contains(&PathNode{i: path_node.i, j, dir: dir.clone()}) {
-
-                    pipes[path_node.i as usize][j as usize] = Pipe::Start;
+                    && !pipes[path_node.i as usize][j as usize].1 {
+                        
+                    pipes[path_node.i as usize][j as usize].0 = Pipe::Start;
                     inside.insert((path_node.i as usize, j as usize));
                     j += sign;
                 }
 
-                if (pipes[path_node.i as usize][path_node.j as usize] == Pipe::SE && sign == -1)
-                    || (pipes[path_node.i as usize][path_node.j as usize] == Pipe::SW && sign == 1) {
+                if (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::SE && sign == -1)
+                    || (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::SW && sign == 1) {
                     let mut i = path_node.i - 1;
                     while 0 <= i
                         && i < pipes.len() as i32
-                        && !path.contains(&PathNode{i, j: path_node.j, dir: dir.clone()}) {
+                        && !pipes[i as usize][path_node.j as usize].1 {
 
-                        pipes[i as usize][path_node.j as usize] = Pipe::Start;
+                        pipes[i as usize][path_node.j as usize].0 = Pipe::Start;
                         inside.insert((i as usize, path_node.j as usize));
                         i -= 1;
                     }
@@ -412,21 +408,21 @@ pub fn part2(input: &str) -> i32 {
                 let mut j = path_node.j - sign;
                 while 0 <= j
                     && j < pipes[path_node.i as usize].len() as i32
-                    && !path.contains(&PathNode{i: path_node.i, j, dir: dir.clone()}) {
+                    && !pipes[path_node.i as usize][j as usize].1 {
 
-                    pipes[path_node.i as usize][j as usize] = Pipe::Start;
+                    pipes[path_node.i as usize][j as usize].0 = Pipe::Start;
                     inside.insert((path_node.i as usize, j as usize));
                     j -= sign;
                 }
 
-                if (pipes[path_node.i as usize][path_node.j as usize] == Pipe::NE && sign == 1)
-                    || (pipes[path_node.i as usize][path_node.j as usize] == Pipe::NW && sign == -1) {
+                if (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::NE && sign == 1)
+                    || (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::NW && sign == -1) {
                     let mut i = path_node.i + 1;
                     while 0 <= i
                         && i < pipes.len() as i32
-                        && !path.contains(&PathNode{i, j: path_node.j, dir: dir.clone()}) {
+                        && !pipes[i as usize][path_node.j as usize].1 {
 
-                        pipes[i as usize][path_node.j as usize] = Pipe::Start;
+                        pipes[i as usize][path_node.j as usize].0 = Pipe::Start;
                         inside.insert((i as usize, path_node.j as usize));
                         i += 1;
                     }
@@ -436,21 +432,21 @@ pub fn part2(input: &str) -> i32 {
                 let mut i = path_node.i + sign;
                 while 0 <= i
                     && i < pipes.len() as i32
-                    && !path.contains(&PathNode{i, j: path_node.j, dir: dir.clone()}) {
+                    && !pipes[i as usize][path_node.j as usize].1 {
 
-                    pipes[i as usize][path_node.j as usize] = Pipe::Start;
+                    pipes[i as usize][path_node.j as usize].0 = Pipe::Start;
                     inside.insert((i as usize, path_node.j as usize));
                     i += sign;
                 }
 
-                if (pipes[path_node.i as usize][path_node.j as usize] == Pipe::NW && sign == 1)
-                    || (pipes[path_node.i as usize][path_node.j as usize] == Pipe::SW && sign == -1) {
+                if (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::NW && sign == 1)
+                    || (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::SW && sign == -1) {
                     let mut j = path_node.j + 1;
                     while 0 <= j
                         && j < pipes[i as usize].len() as i32
-                        && !path.contains(&PathNode{i: path_node.i, j, dir: dir.clone()}) {
+                        && !pipes[path_node.i as usize][j as usize].1 {
 
-                        pipes[path_node.i as usize][j as usize] = Pipe::Start;
+                        pipes[path_node.i as usize][j as usize].0 = Pipe::Start;
                         inside.insert((path_node.i as usize, j as usize));
                         j += 1;
                     }
@@ -460,21 +456,21 @@ pub fn part2(input: &str) -> i32 {
                 let mut i = path_node.i - sign;
                 while 0 <= i
                     && i < pipes.len() as i32
-                    && !path.contains(&PathNode{i, j: path_node.j, dir: dir.clone()}) {
+                    && !pipes[i as usize][path_node.j as usize].1 {
 
-                    pipes[i as usize][path_node.j as usize] = Pipe::Start;
+                    pipes[i as usize][path_node.j as usize].0 = Pipe::Start;
                     inside.insert((i as usize, path_node.j as usize));
                     i -= sign;
                 }
 
-                if (pipes[path_node.i as usize][path_node.j as usize] == Pipe::NE && sign == -1)
-                    || (pipes[path_node.i as usize][path_node.j as usize] == Pipe::SE && sign == 1) {
+                if (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::NE && sign == -1)
+                    || (pipes[path_node.i as usize][path_node.j as usize].0 == Pipe::SE && sign == 1) {
                     let mut j = path_node.j - 1;
                     while 0 <= j
                         && j < pipes[i as usize].len() as i32
-                        && !path.contains(&PathNode{i: path_node.i, j, dir: dir.clone()}) {
+                        && !pipes[path_node.i as usize][j as usize].1 {
 
-                        pipes[path_node.i as usize][j as usize] = Pipe::Start;
+                        pipes[path_node.i as usize][j as usize].0 = Pipe::Start;
                         inside.insert((path_node.i as usize, j as usize));
                         j -= 1;
                     }
@@ -482,7 +478,7 @@ pub fn part2(input: &str) -> i32 {
             }
         }
     }
-
+    
     inside.len() as i32
 }
 
