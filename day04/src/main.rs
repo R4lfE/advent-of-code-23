@@ -4,7 +4,6 @@ fn parse_numbers<T>(card_part: &str) -> T
 where
     T: FromIterator<u32> {
     card_part
-        .trim()
         .split_whitespace()
         .map(|value| value
             .parse()
@@ -96,7 +95,7 @@ mod tests {
         Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
         Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
         Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
-        assert_eq!(part1(&input), 13);
+        assert_eq!(part1(input), 13);
     }
 
     #[test]
@@ -107,6 +106,6 @@ mod tests {
         Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
         Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
         Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
-        assert_eq!(part2(&input), 30);
+        assert_eq!(part2(input), 30);
     }
 }

@@ -9,10 +9,9 @@ fn part1(input: &str) -> i64 {
     let seeds: Vec<i64> = input
         .next()
         .unwrap()
-        .split(":")
+        .split(':')
         .nth(1)
         .unwrap()
-        .trim()
         .split_whitespace()
         .map(|seed| seed.parse::<i64>().unwrap())
         .collect();
@@ -21,7 +20,7 @@ fn part1(input: &str) -> i64 {
     let mut map: Vec<Vec<i64>> = Vec::with_capacity(3);
 
     input.next();
-    while let Some(line) = input.next() {
+    for line in input {
 
         let numbers: Vec<&str> = line
             .split_whitespace()
@@ -43,11 +42,11 @@ fn part1(input: &str) -> i64 {
     maps.push(map);
 
     let mut mapped: Vec<i64> = seeds;
-    for i in 0..7 {
+    for map in maps.iter() {
         mapped = mapped
             .iter()
             .map(|seed| {
-                for range in maps[i].iter() {
+                for range in map.iter() {
                     if range[1] <= *seed && *seed <= range[1] + range[2] {
                         return *seed - range[1] + range[0];
                     }
@@ -60,7 +59,7 @@ fn part1(input: &str) -> i64 {
     *mapped.iter().min().unwrap()
 }
 
-#[derive(Clone, Debug, Eq, Ord)]
+#[derive(Clone, Debug, Eq)]
 enum Boundary {
     Seed(i64),
     LeftMap(i64, i64),
@@ -79,24 +78,30 @@ impl PartialEq for Boundary {
     }
 }
 
-impl PartialOrd for Boundary {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+impl Ord for Boundary {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match (self, other) {
             (Self::Seed(a), Self::Seed(b))
             | (Self::LeftMap(a, _), Self::LeftMap(b, _))
             | (Self::LeftMap(a, _), Self::RightMap(b))
             | (Self::RightMap(a), Self::LeftMap(b, _))
-            | (Self::RightMap(a), Self::RightMap(b)) => a.partial_cmp(b),
+            | (Self::RightMap(a), Self::RightMap(b)) => a.cmp(b),
 
             (Self::Seed(a), Self::LeftMap(b, _)) 
             | (Self::Seed(a), Self::RightMap(b)) 
             | (Self::LeftMap(a, _), Self::Seed(b))
             | (Self::RightMap(a), Self::Seed(b))=> if a == b {
-                Some(std::cmp::Ordering::Less)
+                std::cmp::Ordering::Less
             } else {
-                a.partial_cmp(b)
+                a.cmp(b)
             }
         }
+    }
+}
+
+impl PartialOrd for Boundary {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -110,10 +115,9 @@ fn part2(input: &str) -> i64 {
     let mut seed_boundaries: Vec<Boundary> = input
         .next()
         .unwrap()
-        .split(":")
+        .split(':')
         .nth(1)
         .unwrap()
-        .trim()
         .split_whitespace()
         .map(|seed| seed.parse::<i64>().unwrap())
         .collect::<Vec<i64>>()
@@ -128,7 +132,7 @@ fn part2(input: &str) -> i64 {
 
     // collect all map range boundaries
     let mut maps: Vec<Vec<Boundary>> = Vec::with_capacity(7);
-    while let Some(line) = input.next() {
+    for line in input {
         let numbers: Vec<&str> = line
             .split_whitespace()
             .collect();
@@ -151,10 +155,10 @@ fn part2(input: &str) -> i64 {
     }
     
     // map the ranges for each mapping type
-    for i in 0..7 {
+    for map in maps.iter() {
 
         // merge all boundaries together and sort by value
-        seed_boundaries.extend(maps[i].clone());
+        seed_boundaries.extend(map.clone());
         seed_boundaries.sort();
 
         // prepare to construct new seed boundaries based on the mapping
@@ -289,7 +293,7 @@ mod tests {
         humidity-to-location map:
         60 56 37
         56 93 4";
-        assert_eq!(part1(&input), 35);
+        assert_eq!(part1(input), 35);
     }
 
     #[test]
@@ -320,6 +324,6 @@ mod tests {
         humidity-to-location map:
         60 56 37
         56 93 4";
-        assert_eq!(part2(&input), 46);
+        assert_eq!(part2(input), 46);
     }
 }

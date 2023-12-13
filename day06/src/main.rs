@@ -10,7 +10,6 @@ fn part1(input: &str) -> u32 {
                 .split(':')
                 .nth(1)
                 .unwrap()
-                .trim()
                 .split_whitespace()
                 .map(|value| value.parse().unwrap())
                 .collect()
@@ -42,7 +41,7 @@ fn part2(input: &str) -> u64 {
                 .split(':')
                 .nth(1)
                 .unwrap()
-                .replace(" ", "")
+                .replace(' ', "")
                 .split_whitespace()
                 .map(|value| value.parse().unwrap())
                 .collect::<Vec<u64>>()
@@ -101,13 +100,13 @@ mod tests {
     fn part_1() {
         let input = "Time:      7  15   30
         Distance:  9  40  200";
-        assert_eq!(part1(&input), 288);
+        assert_eq!(part1(input), 288);
     }
 
     #[test]
     fn part_2() {
         let input = "Time:      7  15   30
         Distance:  9  40  200";
-        assert_eq!(part2(&input), 71503);
+        assert_eq!(part2(input), 71503);
     }
 }

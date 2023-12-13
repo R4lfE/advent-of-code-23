@@ -22,10 +22,9 @@ fn part1(input: &str) -> u32 {
             }
 
             if !num.is_empty() {
-                for i_s in (i as i32 - 1).max(0) as usize..=(i + 1).min(array.len() - 1) {
-                    for j_s in (j_start as i32 - 1).max(0) as usize..=(j_end).min(array[i_s].len() - 1) {
-                        let c = array[i_s][j_s];
-                        if !(c.is_numeric() || c == '.') {
+                for row in array.iter().take((i + 1).min(array.len() - 1) + 1).skip((i as i32 - 1).max(0) as usize) {
+                    for c in row.iter().take((j_end).min(row.len() - 1) + 1).skip((j_start as i32 - 1).max(0) as usize) {
+                        if !(c.is_numeric() || *c == '.') {
                             sum += num.parse::<u32>().unwrap();
                         }
                     }
@@ -87,8 +86,8 @@ fn part2(input: &str) -> u32 {
                 .map(|(star_index, _star)| {
                     let mut adjacents: Vec<u32> = Vec::new();
 
-                    for i in (line_index - 1)..=(line_index + 1) {
-                        for indexed_number in indexed_numbers[i].iter() {
+                    for row in indexed_numbers.iter().take(line_index + 2).skip(line_index - 1) {
+                        for indexed_number in row.iter() {
 
                             if indexed_number.0.max(star_index - 1) <= (indexed_number.1).min(star_index + 1) {
                                 adjacents.push(indexed_number.2);
@@ -128,7 +127,7 @@ mod tests {
         ......755.
         ...$.*....
         .664.598..";
-        assert_eq!(part1(&input), 4361);
+        assert_eq!(part1(input), 4361);
     }
 
     #[test]
@@ -147,6 +146,6 @@ mod tests {
         100....100
         ..*.....*.
         ..10....20";
-        assert_eq!(part2(&input), 470835);
+        assert_eq!(part2(input), 470835);
     }
 }

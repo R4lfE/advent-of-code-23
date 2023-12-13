@@ -36,8 +36,7 @@ impl Pipe {
             Pipe::SE => vec![(1, 0), (0, 1)],
             Pipe::SW => vec![(1, 0), (0, -1)],
             Pipe::Ground => vec![],
-            Pipe::Start => vec![(0, -1), (0, 1), (-1, 0), (1, 0)],
-            _ => panic!("Error: Found wrong pipe.")
+            Pipe::Start => vec![(0, -1), (0, 1), (-1, 0), (1, 0)]
         }
     }
 
@@ -286,7 +285,7 @@ struct PathNode {
     dir: Dir
 }
 
-fn find_path(pipes: &mut Vec<Vec<(Pipe, bool)>>, start: (i32, i32)) -> Vec<PathNode> {
+fn find_path(pipes: &mut [Vec<(Pipe, bool)>], start: (i32, i32)) -> Vec<PathNode> {
     let mut path = Vec::new();
 
     let mut prev = start;
@@ -368,10 +367,10 @@ pub fn part2(input: &str) -> i32 {
         dir = path_node.dir.clone();
     }
 
-    for i in 0..pipes.len() {
-        for j in 0..pipes[i].len() {
-            if !pipes[i][j].1 {
-                pipes[i][j].0 = Pipe::Ground;
+    for row in pipes.iter_mut() {
+        for pipe in row.iter_mut() {
+            if !pipe.1 {
+                pipe.0 = Pipe::Ground;
             }
         }
     }

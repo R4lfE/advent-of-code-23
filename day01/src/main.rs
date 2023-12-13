@@ -84,7 +84,7 @@ mod tests {
             pqr3stu8vwx
             a1b2c3d4e5f
             treb7uchet";
-        assert_eq!(part1(&input), 142);
+        assert_eq!(part1(input), 142);
     }
 
     #[test]
@@ -96,6 +96,6 @@ mod tests {
             4nineeightseven2
             zoneight234
             7pqrstsixteen";
-        assert_eq!(part2(&input), 281);
+        assert_eq!(part2(input), 281);
     }
 }
