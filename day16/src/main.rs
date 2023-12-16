@@ -1,4 +1,5 @@
 use std::{error::Error, fs, collections::HashSet};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Eq, PartialEq)]
 enum Object {
@@ -175,7 +176,7 @@ fn part2(input: &str) -> usize {
         starting_beams.push(Beam::new_at(contraption.len() - 1, j, Direction::Up));
     }
 
-    starting_beams.into_iter().map(|beam| find_energized(&contraption, beam)).max().unwrap()
+    starting_beams.into_par_iter().map(|beam| find_energized(&contraption, beam)).max().unwrap()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

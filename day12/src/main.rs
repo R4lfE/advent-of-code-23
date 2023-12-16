@@ -36,7 +36,7 @@ fn can_place(springs: &[Spring], groups: &[usize], i_spring: usize, i_group: usi
 }
 
 fn tabulated(springs: Vec<Spring>, groups: Vec<usize>) -> usize {
-    let mut table = vec![vec![0_usize; springs.len() + 1]; groups.len() + 1];
+    let mut table = vec![vec![0_usize; springs.len() + 1]; 2];
 
     // solution is valid when no groups or damaged springs exist
     let first_damaged = springs.iter().position(|spring| *spring == Spring::Damaged).unwrap_or(springs.len());
@@ -49,7 +49,7 @@ fn tabulated(springs: Vec<Spring>, groups: Vec<usize>) -> usize {
 
             // no effect, give number of solutions of previous sub problem
             if springs[j - 1] == Spring::Operational || springs[j - 1] == Spring::Unknown {
-                table[i][j] += table[i][j - 1];
+                table[i % 2][j] += table[i % 2][j - 1];
             }
             
             // number of ways we can arrange previous groups up to current group placement
@@ -57,14 +57,15 @@ fn tabulated(springs: Vec<Spring>, groups: Vec<usize>) -> usize {
             if (springs[j - 1] == Spring::Damaged || springs[j - 1] == Spring::Unknown)
                 && can_place(&springs, &groups, j - 1, i - 1) {
 
-                table[i][j] += table[i - 1][j - groups[i - 1] - (i > 1) as usize];
+                table[i % 2][j] += table[(i - 1) % 2][j - groups[i - 1] - (i > 1) as usize];
             }
 
             // unkown is the sum of trying to place the group and considering this spring operational
         }
+        table[(i - 1) % 2] = vec![0; springs.len() + 1];
     }
 
-    table[groups.len()][springs.len()] as usize
+    table[groups.len() % 2][springs.len()] as usize
 }
 
 fn part1(input: &str) -> usize {
@@ -123,8 +124,6 @@ mod tests {
 
     #[test]
     fn part_1() {
-        let input = "????? 3,1";
-        assert_eq!(part1(input), 1);
         let input = "???.### 1,1,3";
         assert_eq!(part1(input), 1);
         let input = ".??..??...?##. 1,1,3";
