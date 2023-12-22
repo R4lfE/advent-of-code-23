@@ -1,6 +1,6 @@
 use std::{error::Error, fs, collections::HashMap};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum MachinePart {
     Cool,
     Musical,
@@ -56,9 +56,12 @@ impl From<&str> for Rating {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Operator {
     Less,
-    Greater
+    Greater,
+    LessEq,
+    GreaterEq
 }
 use Operator::*;
 
@@ -72,6 +75,17 @@ impl From<char> for Operator {
     }
 }
 
+impl Operator {
+    fn other(&self) -> Self {
+        match self {
+            Less => GreaterEq,
+            Greater => LessEq,
+            _ => panic!("Error: Invalid operator.")
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 struct Rule {
     part: MachinePart,
     operator: Operator,
@@ -115,6 +129,16 @@ impl From<&str> for Rule {
     }
 }
 
+impl Rule {
+    fn other(self) -> Self {
+        Self {
+            operator: self.operator.other(),
+            ..self
+        }
+    }
+}
+
+#[derive(Clone)]
 struct Workflow {
     this_workflow: String,
     rules: Vec<Rule>,
@@ -189,7 +213,8 @@ fn part1(input: &str) -> usize {
                     Greater => if rating.get(rule.part) > rule.rating {
                         current_workflow = rule.next_workflow.clone();
                         break;
-                    }
+                    },
+                    _ => panic!("Error: Invalid operator.")
                 }
             }
 
@@ -206,9 +231,91 @@ fn part1(input: &str) -> usize {
     sum
 }
 
+fn find_rules_to_a(map: &HashMap<String, Workflow>, current_workflow: &mut String, rules: &mut Vec<Rule>, accepted_ratings: &mut Vec<Vec<Rule>>) {
+    if current_workflow == "A" {
+        accepted_ratings.push(rules.clone());
+    } else if let Some(workflow) = map.get(current_workflow) {
+        let current_workflow_clone = current_workflow.clone();
+        for rule in workflow.rules.iter() {
+            rules.push(rule.clone());
+
+            current_workflow.clear();
+            current_workflow.push_str(&rule.next_workflow);
+
+            find_rules_to_a(map, current_workflow, rules, accepted_ratings);
+
+            rules.pop();
+
+            rules.push(rule.clone().other());
+        }
+
+        current_workflow.clear();
+        current_workflow.push_str(&workflow.next_workflow);
+
+        find_rules_to_a(map, current_workflow, rules, accepted_ratings);
+
+        while let Some(rule) = rules.last() {
+            match rule.operator {
+                Less | Greater => break,
+                LessEq | GreaterEq => { rules.pop(); }
+            }
+        }
+
+        current_workflow.clear();
+        current_workflow.push_str(&current_workflow_clone);
+    }
+}
+
 fn part2(input: &str) -> usize {
     let (workflows, _) = read_list(input);
-    todo!()
+    let mut rules = Vec::new();
+
+    let mut map: HashMap<String, Workflow> = HashMap::new();
+    for workflow in workflows {
+        map.insert(workflow.this_workflow.clone(), workflow);
+    }
+
+    let mut current_workflow = String::from("in");
+
+    let mut accepted_ratings = Vec::new();
+    find_rules_to_a(&map, &mut current_workflow, &mut rules, &mut accepted_ratings);
+
+    let bounds_per_flow: Vec<[(usize, usize); 4]> = accepted_ratings
+        .into_iter()
+        .map(|rules| {
+            let mut bounds = [(1, 4000); 4];
+
+            for rule in rules {
+                match rule.operator {
+                    Less => if rule.rating <= bounds[rule.part as usize].1 {
+                        bounds[rule.part as usize].1 = rule.rating - 1;
+                    },
+                    Greater => if rule.rating >= bounds[rule.part as usize].0 {
+                        bounds[rule.part as usize].0 = rule.rating + 1;
+                    },
+                    LessEq => if rule.rating < bounds[rule.part as usize].1 {
+                        bounds[rule.part as usize].1 = rule.rating;
+                    },
+                    GreaterEq => if rule.rating > bounds[rule.part as usize].0 {
+                        bounds[rule.part as usize].0 = rule.rating;
+                    }
+                }
+            }
+
+            bounds
+        }).collect();
+
+    bounds_per_flow
+        .iter()
+        .map(|bounds| bounds
+            .iter()
+            .fold(0, |acc, bound| {
+                match acc {
+                    0 => bound.1 - bound.0 + 1,
+                    _ => acc * (bound.1 - bound.0 + 1)
+                }
+            })
+        ).sum()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -265,6 +372,6 @@ mod tests {
         {x=2036,m=264,a=79,s=2244}
         {x=2461,m=1339,a=466,s=291}
         {x=2127,m=1623,a=2188,s=1013}"#;
-        assert_eq!(part2(input), 167409079868000);
+        assert_eq!(part2(input), 167_409_079_868_000);
     }
 }

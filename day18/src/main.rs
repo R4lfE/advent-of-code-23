@@ -123,6 +123,8 @@ fn shoelace(dig_plan: Vec<Pattern>) -> i64 {
     // In clockwise orientation, places where we make a left don't count 1/4 of a square.
     // In counter clockwise orientation, this is swapped.
     area + halves / 2 + ((rights.max(lefts) as f64 * 3_f64 / 4_f64) + (lefts.min(rights) as f64 / 4_f64)) as i64
+
+    // Picks theorem works too :( : area + path_len / 2 + 1
 }
 
 fn part1(input: &str) -> i64 {
